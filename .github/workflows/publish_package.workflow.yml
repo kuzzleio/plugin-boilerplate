@@ -1,0 +1,30 @@
+name: Publish release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish-github-npm:
+    name: Deploy package to the Github NPM registry
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          token: ${{ secrets.ACCESS_TOKEN }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+      - name: Set Github package registry
+        run: npm config set @kuzzleio:registry https://npm.pkg.github.com
+      - name: Github package registry authentication
+        run: npm set //npm.pkg.github.com/:_authToken ${{ secrets.GPR_TOKEN }}
+      - run: |
+          cd backend
+          npm ci
+          npm run build
+          npm publish
